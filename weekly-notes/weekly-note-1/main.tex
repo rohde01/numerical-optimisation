@@ -1,0 +1,298 @@
+\documentclass[12pt,a4paper]{article}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Package for making LaTeX properly handle utf8 characters set and danish language rules
+\usepackage[utf8]{inputenc} % æøå
+\usepackage[T1]{fontenc}  % mere æøå
+\usepackage[danish]{babel}  % orddeling
+\usepackage{verbatim} % så man kan skrive ren tekst
+\usepackage[all]{xy} % den sidste (avancerede) formel i dokumentet
+\selectlanguage{Danish}
+\usepackage{fancyhdr}
+\usepackage{float}
+\usepackage{amsmath} % flere matematikkommandoer
+\usepackage{array}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{setspace}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{setspace}  % ← her har du det allerede
+\usepackage[
+    colorlinks=true,
+    urlcolor=blue!50!black,  % eller "black" for sort
+    linkcolor=black,
+    citecolor=black
+]{hyperref}
+
+\usepackage[round]{natbib} % forfatter-år-stil
+\usepackage{graphicx}
+\usepackage{geometry}
+\usepackage{setspace}
+\usepackage{url}
+\usepackage{lmodern}
+\interfootnotelinepenalty=10000
+
+\geometry{margin=2.5cm}
+
+
+\lstdefinestyle{CStyle}{
+    language=C,
+    basicstyle=\small\ttfamily,
+    keywordstyle=\color{blue},
+    commentstyle=\color{green!40!black},
+    stringstyle=\color{orange},
+    numbers=left,
+    numberstyle=\tiny,
+    stepnumber=1,
+    numbersep=5pt,
+    backgroundcolor=\color{gray!5},
+    frame=single,
+    rulecolor=\color{black!30},
+    captionpos=b,
+    breaklines=true,
+    breakatwhitespace=true,
+    tabsize=4,
+    showspaces=false,
+    showstringspaces=false,
+}
+\makeatletter
+\renewcommand*\env@matrix[1][*\c@MaxMatrixCols c]{%
+  \hskip -\arraycolsep
+  \let\@ifnextchar\new@ifnextchar
+  \array{#1}}
+\makeatother
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Package for changing to a nicer font 
+\usepackage [T1]{fontenc}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Package for conctroling the text area
+\usepackage[margin=2.5cm]{geometry}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Package for inserting clickable hyperlinks in pdf versions as produced by pdflatex
+\usepackage{hyperref}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Package for including figures. TeX and thus LaTeX was developped before the existence of directory file-structures, but the graphicspath let's you add directories, that the \includegraphics will search.
+\usepackage{graphicx}
+\graphicspath{{figures/}{anotherFigureDirectory/}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Package for typesetting programs. Listings does not support fsharp, but a little modification goes a long way
+\usepackage{listings}
+\usepackage{color}
+\definecolor{bluekeywords}{rgb}{0.13,0.13,1}
+\definecolor{greencomments}{rgb}{0,0.5,0}
+\definecolor{turqusnumbers}{rgb}{0.17,0.57,0.69}
+\definecolor{redstrings}{rgb}{0.5,0,0}
+
+\lstdefinelanguage{FSharp}
+                {morekeywords={let, new, match, with, rec, open, module, namespace, type, of, member, and, for, in, do, begin, end, fun, function, try, mutable, if, then, else},
+    keywordstyle=\color{bluekeywords},
+    sensitive=false,
+    morecomment=[l][\color{greencomments}]{///},
+    morecomment=[l][\color{greencomments}]{//},
+    morecomment=[s][\color{greencomments}]{{(*}{*)}},
+    morestring=[b]",
+    stringstyle=\color{redstrings}
+    }
+
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\title{Weekly Note 1 - NO}
+\author{zpn710 }
+\date{February 2026}
+
+\begin{document}
+
+\maketitle
+
+% -------------------------------
+% Q1: Benchmarking / comparing optimisation algorithms
+% -------------------------------
+\subsection*{1) Fair comparison of optimisation algorithms}
+
+\paragraph{Goal.}
+We want a benchmarking setup that compares optimisation algorithms \emph{fairly}, meaning performance differences should reflect the algorithms rather than the test setup.
+
+\paragraph{What ``good'' means.}
+Algorithm quality is multi-dimensional. In particular, we care about robustness (works across problems and starting points), stability (avoids numerical issues), resource efficiency (time/evaluations/memory), and accuracy (solution quality). These criteria can conflict, so one algorithm should not be expected to dominate on every axis.
+
+\paragraph{Testing protocol.}
+A fair comparison can be organised as follows:
+\begin{enumerate}
+    \item \textbf{Benchmark set:} Use a fixed set of objective functions and test multiple dimensions $d$ when applicable.
+    \item \textbf{Starting points:} Use a set of starting points per function (e.g.\ 10--50) to assess robustness. A single starting point can give a misleading ranking.
+    \item \textbf{Stopping criterion:} Apply the same stopping rule to all methods, e.g.\ stop when $\|\nabla f(x_k)\|\le \varepsilon$, together with a maximum budget (e.g.\ max function/gradient evaluations).
+    \item \textbf{Equal information access:} Compare methods that use comparable information (e.g.\ gradient-based methods with gradient-based methods), or account for the extra cost of richer information (e.g.\ Hessians) when interpreting results.
+    \item \textbf{Cost accounting:} Measure progress against cost (time or number of function/gradient evaluations). This is often fairer than counting iterations, since iterations can have different computational cost.
+\end{enumerate}
+
+\paragraph{Performance metrics.}
+Record metrics that reflect the key quality dimensions:
+\begin{itemize}
+    \item \textbf{Efficiency:} wall-clock time, number of function evaluations, number of gradient evaluations.
+    \item \textbf{Accuracy:} final $f(x)$, final $\|\nabla f(x)\|$, and (if known) distance to the true minimiser.
+    \item \textbf{Robustness:} success rate (fraction reaching the tolerance) and distribution of results across starting points.
+\end{itemize}
+
+\paragraph{How to summarise results.}
+A single scalar score can be misleading because algorithm rankings can depend on the runtime horizon (some methods are strong early but weaker later, or vice versa). Therefore, it is useful to report summary statistics across starting points (e.g.\ median and quantiles) and also include convergence curves such as $\|\nabla f(x_k)\|$ versus evaluation budget (often on a log-scale), which reveals convergence speed and stability.
+
+% -------------------------------
+% Q2: Sum of Different Powers function f5
+% -------------------------------
+\subsection*{2) Sum of Different Powers: global minimum at $x=0$ but 2nd-order sufficient conditions fail}
+
+We consider the case-study function
+\[
+f_5(x)=\sum_{i=1}^{d}\left(x_i^2\right)^{\,1+\frac{i-1}{d-1}}.
+\]
+
+\paragraph{Claim 1: $x=0$ is a global minimiser.}
+For each coordinate $i$, we have $x_i^2\ge 0$. Raising a nonnegative number to a positive power preserves nonnegativity, hence
+\[
+\left(x_i^2\right)^{\,1+\frac{i-1}{d-1}} \ge 0
+\quad\Rightarrow\quad
+f_5(x)\ge 0 \ \text{for all } x.
+\]
+At $x=0$, each term equals $0$, so $f_5(0)=0$. Since $0$ is the smallest possible value, $x=0$ is a \emph{global} minimiser.
+
+\paragraph{Claim 2: The second-order sufficient conditions at $x=0$ do not hold.}
+A common second-order sufficient condition for a strict local minimum in unconstrained optimisation is
+\[
+\nabla f(0)=0
+\quad \text{and} \quad
+\nabla^2 f(0)\ \text{is positive definite}.
+\]
+Write each term as
+\[
+\left(x_i^2\right)^{\,1+\frac{i-1}{d-1}} = |x_i|^{2p_i},
+\qquad
+p_i = 1+\frac{i-1}{d-1}.
+\]
+For $i=1$, $p_1=1$ and the term is $x_1^2$, which has nonzero curvature at $0$. For any $i>1$, we have $p_i>1$, so the exponent satisfies $2p_i>2$. Functions of the form $|t|^{q}$ with $q>2$ are very flat at $t=0$, and their second derivative at $0$ equals $0$. Therefore, the Hessian $\nabla^2 f_5(0)$ has at least one zero eigenvalue (it is singular) and cannot be positive definite.
+
+Hence, even though $x=0$ is a global (indeed strict) minimiser, the Hessian-based second-order sufficient condition fails because $\nabla^2 f_5(0)$ is not positive definite.
+
+
+
+
+\section{Theoretical Assignment}
+
+\paragraph{Function.}
+For $d=2$ we have
+\[
+f_5(x)=\sum_{i=1}^2 |x_i|^{a_i},
+\qquad a=[2,4],
+\]
+so
+\[
+f_5(x_1,x_2)=|x_1|^2+|x_2|^4,
+\qquad x^*=(0,0)^T.
+\]
+
+\paragraph{Gradient and Hessian (for $x_{k,2}\neq0$).}
+Since $|x_1|^2=x_1^2$,
+\[
+\nabla f_5(x)=
+\begin{pmatrix}
+2x_1\\
+4\,\operatorname{sign}(x_2)|x_2|^3
+\end{pmatrix}.
+\]
+For $x_2\neq0$, the Hessian is
+\[
+H_{f_5}(x)=
+\begin{pmatrix}
+2 & 0\\
+0 & 12|x_2|^2
+\end{pmatrix}.
+\]
+
+\paragraph{Newton step.}
+The Newton direction is
+\[
+p_k=-H_{f_5}(x_k)^{-1}\nabla f_5(x_k).
+\]
+Since the Hessian is diagonal,
+\[
+H_{f_5}(x_k)^{-1}=
+\begin{pmatrix}
+\frac12 & 0\\
+0 & \frac{1}{12|x_{k,2}|^2}
+\end{pmatrix},
+\]
+which gives
+\[
+p_k=
+\begin{pmatrix}
+- x_{k,1}\\
+-\frac13 x_{k,2}
+\end{pmatrix}.
+\]
+
+\paragraph{Iteration with $\alpha_k=1$.}
+Assuming the full step is accepted,
+\[
+x_{k+1}=x_k+p_k=
+\begin{pmatrix}
+0\\
+\frac23 x_{k,2}
+\end{pmatrix}.
+\]
+The first component reaches the minimizer in one step, while
+\[
+|x_{k+1,2}|=\frac23 |x_{k,2}|.
+\]
+Hence
+\[
+\|x_{k+1}-x^*\|
+=\frac23 \|x_k-x^*\|.
+\]
+Therefore Newton’s method converges \emph{Q-linearly} with rate
+\[
+r=\frac23.
+\]
+It is not Q-superlinear since
+\[
+\lim_{k\to\infty}
+\frac{\|x_{k+1}-x^*\|}{\|x_k-x^*\|}
+=\frac23\neq0.
+\]
+
+\paragraph{Generalization to $d>2$.}
+For
+\[
+f_5(x)=\sum_{i=1}^d |x_i|^{a_i},
+\qquad a_i\in[2,4],
+\]
+the function is separable, so each coordinate behaves independently. 
+Repeating the calculation for one component gives
+\[
+x_{k+1,i}
+=
+\frac{a_i-2}{a_i-1}\,x_{k,i}.
+\]
+For $a_i>2$,
+\[
+0<\frac{a_i-2}{a_i-1}<1,
+\]
+so each component converges linearly. The overall rate is
+\[
+r=\max_{i:\,a_i>2}
+\frac{a_i-2}{a_i-1}
+<1.
+\]
+Thus, for any $d>2$, Newton’s method is Q-linear but not Q-superlinear.
+
+
+
+
+
+\end{document}
